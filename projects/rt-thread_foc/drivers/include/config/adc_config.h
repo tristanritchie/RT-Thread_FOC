@@ -26,7 +26,7 @@ extern "C" {
        .Init.Resolution            = ADC_RESOLUTION_12B,            \
        .Init.DataAlign             = ADC_DATAALIGN_RIGHT,           \
        .Init.ScanConvMode          = DISABLE,                       \
-       .Init.EOCSelection          = DISABLE,                       \
+       .Init.EOCSelection          = ADC_EOC_SINGLE_CONV,           \
        .Init.ContinuousConvMode    = DISABLE,                       \
        .Init.NbrOfConversion       = 1,                             \
        .Init.DiscontinuousConvMode = DISABLE,                       \
@@ -34,6 +34,26 @@ extern "C" {
        .Init.ExternalTrigConv      = ADC_SOFTWARE_START,            \
        .Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE, \
        .Init.DMAContinuousRequests = DISABLE,                       \
+    }
+
+#define ADC1_CH_CONFIG  (ADC_ChannelConfTypeDef)\
+    {                                           \
+      .Channel = ADC_CHANNEL_1,                 \
+      .Rank = 1,                                \
+      .SamplingTime = ADC_SAMPLETIME_3CYCLES,   \
+    }
+
+#define ADC1_CH_INJ_CONFIG  (ADC_InjectionConfTypeDef)                  \
+    {                                                                   \
+      .InjectedChannel = ADC_CHANNEL_1,                                 \
+      .InjectedRank = 1,                                                \
+      .InjectedNbrOfConversion = 1,                                     \
+      .InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES,                   \
+      .ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONVEDGE_RISING,\
+      .ExternalTrigInjecConv = ADC_EXTERNALTRIGINJECCONV_T1_TRGO,       \
+      .AutoInjectedConv = DISABLE,                                      \
+      .InjectedDiscontinuousConvMode = DISABLE,                         \
+      .InjectedOffset = 0,                                              \
     }
 #endif /* ADC1_CONFIG */
 #endif /* BSP_USING_ADC1 */
@@ -47,7 +67,7 @@ extern "C" {
        .Init.Resolution            = ADC_RESOLUTION_12B,            \
        .Init.DataAlign             = ADC_DATAALIGN_RIGHT,           \
        .Init.ScanConvMode          = DISABLE,                       \
-       .Init.EOCSelection          = DISABLE,                       \
+       .Init.EOCSelection          = ADC_EOC_SINGLE_CONV,           \
        .Init.ContinuousConvMode    = DISABLE,                       \
        .Init.NbrOfConversion       = 1,                             \
        .Init.DiscontinuousConvMode = DISABLE,                       \
@@ -55,6 +75,26 @@ extern "C" {
        .Init.ExternalTrigConv      = ADC_SOFTWARE_START,            \
        .Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE, \
        .Init.DMAContinuousRequests = DISABLE,                       \
+    }
+
+#define ADC2_CH_CONFIG  (ADC_ChannelConfTypeDef)\
+    {                                           \
+      .Channel = ADC_CHANNEL_1,                 \
+      .Rank = 1,                                \
+      .SamplingTime = ADC_SAMPLETIME_3CYCLES,   \
+    }
+
+#define ADC2_CH_INJ_CONFIG  (ADC_InjectionConfTypeDef)                  \
+    {                                                                   \
+      .InjectedChannel = ADC_CHANNEL_2,                                 \
+      .InjectedRank = 1,                                                \
+      .InjectedNbrOfConversion = 1,                                     \
+      .InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES,                   \
+      .ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONVEDGE_RISING,\
+      .ExternalTrigInjecConv = ADC_EXTERNALTRIGINJECCONV_T1_TRGO,       \
+      .AutoInjectedConv = DISABLE,                                      \
+      .InjectedDiscontinuousConvMode = DISABLE,                         \
+      .InjectedOffset = 0,                                              \
     }
 #endif /* ADC2_CONFIG */
 #endif /* BSP_USING_ADC2 */

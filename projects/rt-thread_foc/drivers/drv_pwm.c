@@ -319,12 +319,20 @@ static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
 
     /* configure the timer to pwm mode */
     tim->Init.Prescaler = 0;
-    tim->Init.CounterMode = TIM_COUNTERMODE_UP;
+    tim->Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
     tim->Init.Period = 0;
     tim->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    tim->Init.RepetitionCounter = 1;
+    tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 #if defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32L4)
     tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 #endif
+    if (HAL_TIM_Base_Init(tim) != HAL_OK)
+    {
+        LOG_E("%s pwm init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
+    }
 
     if (HAL_TIM_PWM_Init(tim) != HAL_OK)
     {
@@ -341,7 +349,7 @@ static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
         goto __exit;
     }
 
-    master_config.MasterOutputTrigger = TIM_TRGO_RESET;
+    master_config.MasterOutputTrigger = TIM_TRGO_UPDATE;
     master_config.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     if (HAL_TIMEx_MasterConfigSynchronization(tim, &master_config) != HAL_OK)
     {
@@ -353,9 +361,10 @@ static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
     oc_config.OCMode = TIM_OCMODE_PWM1;
     oc_config.Pulse = 0;
     oc_config.OCPolarity = TIM_OCPOLARITY_HIGH;
+    oc_config.OCNPolarity = TIM_OCNPOLARITY_HIGH;
     oc_config.OCFastMode = TIM_OCFAST_DISABLE;
+    oc_config.OCIdleState = TIM_OCIDLESTATE_RESET;
     oc_config.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-    oc_config.OCIdleState  = TIM_OCIDLESTATE_RESET;
 
     /* config pwm channel */
     if (device->channel & 0x01)

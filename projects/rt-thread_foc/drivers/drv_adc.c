@@ -232,6 +232,8 @@ static const struct rt_adc_ops stm_adc_ops =
 static int stm32_adc_init(void)
 {
     int result = RT_EOK;
+    ADC_ChannelConfTypeDef stm32_ch_config = {0};
+    ADC_InjectionConfTypeDef stm32_ch_injected_config = {0};
     /* save adc name */
     char name_buf[5] = {'a', 'd', 'c', '0', 0};
     int i = 0;
@@ -245,12 +247,16 @@ static int stm32_adc_init(void)
         if (stm32_adc_obj[i].ADC_Handler.Instance == ADC1)
         {
             name_buf[3] = '1';
+            stm32_ch_config = ADC1_CH_CONFIG;
+            stm32_ch_injected_config = ADC1_CH_INJ_CONFIG;
         }
 #endif
 #if defined(ADC2)
         if (stm32_adc_obj[i].ADC_Handler.Instance == ADC2)
         {
             name_buf[3] = '2';
+            stm32_ch_config = ADC2_CH_CONFIG;
+            stm32_ch_injected_config = ADC2_CH_INJ_CONFIG;
         }
 #endif
 #if defined(ADC3)
@@ -260,6 +266,16 @@ static int stm32_adc_init(void)
         }
 #endif
         if (HAL_ADC_Init(&stm32_adc_obj[i].ADC_Handler) != HAL_OK)
+        {
+            LOG_E("%s init failed", name_buf);
+            result = -RT_ERROR;
+        }
+        else if (HAL_ADC_ConfigChannel(&stm32_adc_obj[i].ADC_Handler, &stm32_ch_config) != HAL_OK)
+        {
+            LOG_E("%s init failed", name_buf);
+            result = -RT_ERROR;
+        }
+        else if (HAL_ADCEx_InjectedConfigChannel(&stm32_adc_obj[i].ADC_Handler, &stm32_ch_injected_config) != HAL_OK)
         {
             LOG_E("%s init failed", name_buf);
             result = -RT_ERROR;
@@ -282,6 +298,21 @@ static int stm32_adc_init(void)
     return result;
 }
 INIT_BOARD_EXPORT(stm32_adc_init);
+
+void ADC_IRQHandler(void)
+{
+    rt_interrupt_enter();
+    HAL_ADC_IRQHandler(&stm32_adc_obj[0].ADC_Handler);
+    rt_interrupt_leave();
+}
+
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if (stm32_adc_obj[0].stm32_adc_device.parent.rx_indicate != RT_NULL)
+    {
+        stm32_adc_obj[0].stm32_adc_device.parent.rx_indicate(&stm32_adc_obj[0].stm32_adc_device.parent, 0);
+    }
+}
 
 #endif /* BSP_USING_ADC */
 
