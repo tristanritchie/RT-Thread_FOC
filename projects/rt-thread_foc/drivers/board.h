@@ -162,7 +162,10 @@ extern "C"
  *
  */
 
-/*#define BSP_USING_PWM1*/
+#define BSP_USING_PWM1
+#define BSP_USING_PWM1_CH1
+#define BSP_USING_PWM1_CH2
+#define BSP_USING_PWM1_CH3
 /*#define BSP_USING_PWM2*/
 /*#define BSP_USING_PWM3*/
 
@@ -185,8 +188,8 @@ extern "C"
  *
  */
 
-/*#define BSP_USING_ADC1*/
-/*#define BSP_USING_ADC2*/
+#define BSP_USING_ADC1
+#define BSP_USING_ADC2
 /*#define BSP_USING_ADC3*/
 
 /*-------------------------- ADC CONFIG END --------------------------*/
@@ -228,6 +231,13 @@ extern "C"
 /*#define BSP_USING_TIM16*/
 /*#define BSP_USING_TIM17*/
 #endif
+
+/*-------------------------- HAREWARE TIMER CONFIG END --------------------------*/
+
+/*-------------------------- ENCODER CONFIG BEGIN --------------------------*/
+
+
+#define BSP_USING_PULSE_ENCODER2
 
 /*-------------------------- HAREWARE TIMER CONFIG END --------------------------*/
 
