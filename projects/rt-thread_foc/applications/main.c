@@ -14,13 +14,17 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#include "mc_rtthread/mc_foc.h"
+
 int main(void)
 {
+    mc_foc_init();
+
     int count = 1;
 
     while (count++)
     {
-        LOG_D("Hello RT-Thread!");
+        //LOG_D("Hello RT-Thread!");
         rt_thread_mdelay(1000);
     }
 
