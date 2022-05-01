@@ -1,20 +1,16 @@
 # RT-Thread_FOC
  FOC implementation and interrupt latency tests for RT-Thread
 
- ## Contents
+## Contents
 
-5 RT-Thread Studio projects for the STM32F429ZI:
-- rt_foc: field-oriented control implemented in the ADC ISR using RT-Thread
-- rt_semaphore_latency: latency measurement using RT-Thread semaphore
-- rt_schedule_latency_1: latency measurement using RT-Thread manual scheduling (suspend/resume)
-- rt_schedule_latency_2: latency measurement using modified RT-Thread schedule function to remove unused overhead when switching from ISR
-- custom_schedule_latency: rewritting RT-Thread scheduler to greatly accelerate context switching from ISR
+Field-oriented control implemented over RT-Thread. Seperate branches are available to test interrupt latency.
 
 
 ## Perliminary Results
 
-- rt_foc: not applicable
-- rt_semaphore_latency: significant latency approx 11us
-- rt_schedule_latency_1: improved response approx 6us
-- rt_schedule_latency_2: small improvement approx 5us
-- custom_schedule_latency: big improvement approx 2.5us, not currently stable and crashes after 10 seconds...
+Checkout the branch corresponding to the test:
+- rt_foc: FOC implemented in ISR, latency not applicable
+- latency_test_semaphore: significant latency approx 11us
+- latency_test_suspend_resume: improved response approx 6us
+- latency_test_fast_schedule: small improvement approx 5us
+- latency_test_custom_schedule: big improvement approx 2.5us, not currently stable (stack overflow)
