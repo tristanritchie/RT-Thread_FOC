@@ -18,7 +18,10 @@
 
 int main(void)
 {
-    mc_foc_init();
+    if (mc_foc_init() != RT_EOK);
+    {
+        LOG_D("FOC init failed");
+    }
 
     int count = 1;
 
