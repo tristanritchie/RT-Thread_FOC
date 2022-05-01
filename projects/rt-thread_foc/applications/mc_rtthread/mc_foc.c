@@ -59,12 +59,15 @@ static char foc_thread_stack[1024];
 
 void mc_foc_tasks(void *parameter)
 {
+    rt_thread_suspend(rt_thread_self());
+    rt_schedule();
     while(1)
     {
-        rt_thread_suspend(rt_thread_self());
+        rt_schedule_isr_thread_exit(foc_thread);
+        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+        rt_thread_suspend(foc_thread);
         rt_schedule();
-        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
-        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     }
 }
 
@@ -158,7 +161,7 @@ rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size)
 {
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     rt_thread_resume(foc_thread);
-    rt_schedule_from_ISR(foc_thread);
+    rt_schedule_isr_thread_enter(foc_thread);
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     return RT_EOK;
 }
