@@ -54,9 +54,6 @@ static mc_pi_controller_t q_axis_controller;
 static mc_pi_controller_t speed_controller;
 
 
-
-
-
 int mc_foc_init(void)
 {
     int result = RT_EOK;
@@ -107,9 +104,8 @@ int mc_foc_init(void)
     rt_device_open(pulse_encoder_dev, RT_DEVICE_OFLAG_RDWR);
 
     /* ADC offset calibration */
-    mc_adc_offset_calibration(adc1_dev, 0, &input.a_offset);
-    mc_adc_offset_calibration(adc2_dev, 1, &input.b_offset);
-
+    //mc_adc_offset_calibration(adc1_dev, 0, &input.a_offset);
+    //mc_adc_offset_calibration(adc2_dev, 1, &input.b_offset);
 
     /* FOC structure initialization */
     /* Initialize PI controller block structure */
@@ -121,9 +117,11 @@ int mc_foc_init(void)
     mc_pwm_enable(pwm_dev);
 
     /* Forced alignment of rotor */
-    mc_rotor_alignment(&input, &transform, &svm);
+    //mc_rotor_alignment(&input, &transform, &svm);
     /* Reset encoder to initial position 0 */
     rt_device_control(pulse_encoder_dev, PULSE_ENCODER_CMD_CLEAR_COUNT, RT_NULL);
+    mc_svm_init(&svm);
+    mc_pwm_set(pwm_dev, &svm);
 
     /* Register ADC callback */
     rt_device_set_rx_indicate(&adc1_dev->parent, mc_adc_callback);
@@ -188,6 +186,8 @@ void mc_foc(void)
         d_axis_controller.in_ref = speed_controller.out;
     }
 #endif /* SPEED_CONTROL_ENABLE */
+
+    return;
 }
 
 
@@ -219,7 +219,10 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     mc_pwm_set(pwm_dev, svm);
 
     rt_thread_mdelay(ALIGN_DELAY_MS);
+
+    return;
 }
+
 
 /* Virtual COM interface (UART) */
 static int foc(int argc, char **argv)
@@ -322,6 +325,7 @@ static int foc(int argc, char **argv)
 }
 MSH_CMD_EXPORT(foc, foc function)
 
+
 void mc_adc_enable(rt_adc_device_t adc1_dev, rt_adc_device_t adc2_dev)
 {
     HAL_ADCEx_InjectedStart(adc2_dev->parent.user_data);
@@ -335,6 +339,7 @@ void mc_adc_disable(rt_adc_device_t adc1_dev, rt_adc_device_t adc2_dev)
     HAL_ADCEx_InjectedStop(adc2_dev->parent.user_data);
 }
 
+
 void mc_pwm_enable(struct rt_device_pwm *pwm_dev)
 {
     rt_pwm_enable(pwm_dev, PWM_CH1);
@@ -344,6 +349,7 @@ void mc_pwm_enable(struct rt_device_pwm *pwm_dev)
     rt_pwm_enable(pwm_dev, PWM_CH3);
     rt_pwm_enable(pwm_dev, -PWM_CH3);
 }
+
 
 void mc_pwm_disable(struct rt_device_pwm *pwm_dev)
 {
@@ -355,9 +361,11 @@ void mc_pwm_disable(struct rt_device_pwm *pwm_dev)
     rt_pwm_disable(pwm_dev, -PWM_CH3);
 }
 
+
 void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
 {
     rt_pwm_set(pwm_dev, PWM_CH1, PWM_PERIOD, svm->pwm1);
     rt_pwm_set(pwm_dev, PWM_CH2, PWM_PERIOD, svm->pwm2);
     rt_pwm_set(pwm_dev, PWM_CH3, PWM_PERIOD, svm->pwm3);
 }
+
