@@ -185,6 +185,8 @@ void rt_schedule(void);
 void rt_schedule_insert_thread(struct rt_thread *thread);
 void rt_schedule_remove_thread(struct rt_thread *thread);
 
+void rt_schedule_from_ISR(struct rt_thread *to_thread);
+
 void rt_enter_critical(void);
 void rt_exit_critical(void);
 rt_uint16_t rt_critical_level(void);
