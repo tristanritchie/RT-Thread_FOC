@@ -158,7 +158,7 @@ rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size)
 {
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     rt_thread_resume(foc_thread);
-    rt_schedule();
+    rt_schedule_from_ISR(foc_thread);
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     return RT_EOK;
 }
