@@ -19,12 +19,52 @@ extern "C" {
 
 #ifdef BSP_USING_PWM1
 #ifndef PWM1_CONFIG
-#define PWM1_CONFIG                             \
-    {                                           \
-       .tim_handle.Instance     = TIM1,         \
-       .name                    = "pwm1",       \
-       .channel                 = 0             \
+#define PWM1_CONFIG                                 \
+    {                                               \
+       .tim_handle.Instance     = TIM1,             \
+       .name                    = "pwm1",           \
+       .channel                 = 1                 \
     }
+
+#define PWM1_INIT_CONFIG  (TIM_Base_InitTypeDef)                \
+    {                                                           \
+        .Prescaler = 0,                                    \
+        .CounterMode = TIM_COUNTERMODE_CENTERALIGNED1,     \
+        .Period = 0,                                       \
+        .ClockDivision = TIM_CLOCKDIVISION_DIV1,           \
+        .RepetitionCounter = 1,                            \
+        .AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE,\
+    }
+
+#define PWM1_OC_CONFIG  (TIM_OC_InitTypeDef)    \
+    {                                           \
+        .OCMode = TIM_OCMODE_PWM1,              \
+        .Pulse = 0,                             \
+        .OCPolarity = TIM_OCPOLARITY_HIGH,      \
+        .OCNPolarity = TIM_OCNPOLARITY_HIGH,    \
+        .OCFastMode = TIM_OCFAST_DISABLE,       \
+        .OCIdleState = TIM_OCIDLESTATE_RESET,   \
+        .OCNIdleState = TIM_OCNIDLESTATE_RESET, \
+    }
+
+#define PWM1_BDT_CONFIG  (TIM_BreakDeadTimeConfigTypeDef)   \
+    {                                                       \
+        .OffStateRunMode = TIM_OSSR_DISABLE,                \
+        .OffStateIDLEMode = TIM_OSSI_DISABLE,               \
+        .LockLevel = TIM_LOCKLEVEL_OFF,                     \
+        .DeadTime = 0,                                      \
+        .BreakState = TIM_BREAK_DISABLE,                    \
+        .BreakPolarity = TIM_BREAKPOLARITY_HIGH,            \
+        .AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE,     \
+    }
+
+#define PWM1_MASTER_CONFIG  (TIM_MasterConfigTypeDef)       \
+    {                                                       \
+        .MasterOutputTrigger = TIM_TRGO_UPDATE,             \
+        .MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE,     \
+    }
+
+
 #endif /* PWM1_CONFIG */
 #endif /* BSP_USING_PWM1 */
 

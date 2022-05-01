@@ -308,110 +308,85 @@ static rt_err_t drv_pwm_control(struct rt_device_pwm *device, int cmd, void *arg
 static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
 {
     rt_err_t result = RT_EOK;
-    TIM_HandleTypeDef *tim = RT_NULL;
-    TIM_OC_InitTypeDef oc_config = {0};
-    TIM_MasterConfigTypeDef master_config = {0};
-    TIM_ClockConfigTypeDef clock_config = {0};
-
+    TIM_HandleTypeDef *tim = NULL;
     RT_ASSERT(device != RT_NULL);
-
     tim = (TIM_HandleTypeDef *)&device->tim_handle;
 
-    /* configure the timer to pwm mode */
-    tim->Init.Prescaler = 0;
-    tim->Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
-    tim->Init.Period = 0;
-    tim->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim->Init.RepetitionCounter = 1;
-    tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-#if defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32L4)
-    tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-#endif
-    if (HAL_TIM_Base_Init(tim) != HAL_OK)
+    TIM_MasterConfigTypeDef master_config = {0};
+    TIM_OC_InitTypeDef oc_config = {0};
+    TIM_BreakDeadTimeConfigTypeDef break_dead_time_config = {0};
+
+#ifdef BSP_USING_PWM1
+    if (tim->Instance == TIM1)
     {
-        LOG_E("%s pwm init failed", device->name);
-        result = -RT_ERROR;
-        goto __exit;
+        tim->Init = PWM1_INIT_CONFIG;
+        master_config = PWM1_MASTER_CONFIG;
+        oc_config = PWM1_OC_CONFIG;
+        break_dead_time_config = PWM1_BDT_CONFIG;
     }
+#endif /* BSP_USING_PWM1 */
+#ifdef BSP_USING_PWM2
+    if (tim->Instance == TIM2)
+    {
+        tim->Init = PWM2_INIT_CONFIG;
+        master_config = PWM2_MASTER_CONFIG;
+        oc_config = PWM2_OC_CONFIG;
+        break_dead_time_config = PWM2_BDT_CONFIG;
+    }
+#endif /* BSP_USING_PWM2 */
+#ifdef BSP_USING_PWM3
+    if (tim->Instance == TIM3)
+    {
+        tim->Init = PWM3_INIT_CONFIG;
+        master_config = PWM3_MASTER_CONFIG;
+        oc_config = PWM3_OC_CONFIG;
+        break_dead_time_config = PWM3_BDT_CONFIG;
+    }
+#endif /* BSP_USING_PWM3 */
 
     if (HAL_TIM_PWM_Init(tim) != HAL_OK)
     {
-        LOG_E("%s pwm init failed", device->name);
+        LOG_E("%s pwm base init failed", device->name);
         result = -RT_ERROR;
         goto __exit;
     }
 
-    clock_config.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-    if (HAL_TIM_ConfigClockSource(tim, &clock_config) != HAL_OK)
-    {
-        LOG_E("%s clock init failed", device->name);
-        result = -RT_ERROR;
-        goto __exit;
-    }
-
-    master_config.MasterOutputTrigger = TIM_TRGO_UPDATE;
-    master_config.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     if (HAL_TIMEx_MasterConfigSynchronization(tim, &master_config) != HAL_OK)
     {
-        LOG_E("%s master config failed", device->name);
+        LOG_E("%s pwm master init failed", device->name);
         result = -RT_ERROR;
         goto __exit;
     }
 
-    oc_config.OCMode = TIM_OCMODE_PWM1;
-    oc_config.Pulse = 0;
-    oc_config.OCPolarity = TIM_OCPOLARITY_HIGH;
-    oc_config.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-    oc_config.OCFastMode = TIM_OCFAST_DISABLE;
-    oc_config.OCIdleState = TIM_OCIDLESTATE_RESET;
-    oc_config.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-
-    /* config pwm channel */
-    if (device->channel & 0x01)
+    if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_1) != HAL_OK)
     {
-        if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_1) != HAL_OK)
-        {
-            LOG_E("%s channel1 config failed", device->name);
-            result = -RT_ERROR;
-            goto __exit;
-        }
+        LOG_E("%s pwm channel 1 init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
     }
 
-    if (device->channel & 0x02)
+    if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_2) != HAL_OK)
     {
-        if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_2) != HAL_OK)
-        {
-            LOG_E("%s channel2 config failed", device->name);
-            result = -RT_ERROR;
-            goto __exit;
-        }
+        LOG_E("%s pwm channel 2 init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
     }
 
-    if (device->channel & 0x04)
+    if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_3) != HAL_OK)
     {
-        if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_3) != HAL_OK)
-        {
-            LOG_E("%s channel3 config failed", device->name);
-            result = -RT_ERROR;
-            goto __exit;
-        }
+        LOG_E("%s pwm channel 3 init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
     }
 
-    if (device->channel & 0x08)
+    if (HAL_TIMEx_ConfigBreakDeadTime(tim, &break_dead_time_config) != HAL_OK)
     {
-        if (HAL_TIM_PWM_ConfigChannel(tim, &oc_config, TIM_CHANNEL_4) != HAL_OK)
-        {
-            LOG_E("%s channel4 config failed", device->name);
-            result = -RT_ERROR;
-            goto __exit;
-        }
+        LOG_E("%s pwm break/dead time init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
     }
 
-    /* pwm pin configuration */
     HAL_TIM_MspPostInit(tim);
-
-    /* enable update request source */
-    __HAL_TIM_URS_ENABLE(tim);
 
 __exit:
     return result;
@@ -573,6 +548,22 @@ __exit:
 }
 INIT_DEVICE_EXPORT(stm32_pwm_init);
 #endif /* RT_USING_PWM */
+
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
+{
+  if(htim_pwm->Instance==TIM1)
+  {
+  /* USER CODE BEGIN TIM1_MspInit 0 */
+
+  /* USER CODE END TIM1_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_TIM1_CLK_ENABLE();
+  /* USER CODE BEGIN TIM1_MspInit 1 */
+
+  /* USER CODE END TIM1_MspInit 1 */
+  }
+
+}
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
 {
