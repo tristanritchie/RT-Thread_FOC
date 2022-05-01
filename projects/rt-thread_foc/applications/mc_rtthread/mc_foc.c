@@ -53,6 +53,20 @@ static mc_pi_controller_t d_axis_controller;
 static mc_pi_controller_t q_axis_controller;
 static mc_pi_controller_t speed_controller;
 
+/* FOC thread */
+rt_thread_t foc_thread;
+static char foc_thread_stack[1024];
+
+void mc_foc_tasks(void *parameter)
+{
+    while(1)
+    {
+        rt_thread_suspend(rt_thread_self());
+        rt_schedule();
+        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+    }
+}
 
 int mc_foc_init(void)
 {
@@ -65,6 +79,13 @@ int mc_foc_init(void)
     rt_pin_mode(LED2, PIN_MODE_OUTPUT);
     rt_pin_mode(LED3, PIN_MODE_OUTPUT);
     rt_pin_mode(PIN_E0, PIN_MODE_OUTPUT);
+
+    /* Create FOC thread */
+    foc_thread = rt_thread_create("foc_thread", mc_foc_tasks, RT_NULL, sizeof(foc_thread_stack), 1, 5);
+    if (foc_thread != RT_NULL)
+    {
+        rt_thread_startup(foc_thread);
+    }
 
     /* RT-Thread driver device object initialization */
     /* Register phase A current measurement ADC */
@@ -136,10 +157,8 @@ int mc_foc_init(void)
 rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size)
 {
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
-    if (p_context->state == MC_FOC_ENABLE)
-    {
-        mc_foc();
-    }
+    rt_thread_resume(foc_thread);
+    rt_schedule();
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
     return RT_EOK;
 }
