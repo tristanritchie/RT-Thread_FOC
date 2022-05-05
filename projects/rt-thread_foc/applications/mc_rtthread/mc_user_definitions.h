@@ -29,6 +29,7 @@
 #define MC_SPEED_CNTR_FREQ      1000
 #define MC_SPEED_CNTR_PRESCALER MC_TORQUE_CNTR_FREQ / MC_SPEED_CNTR_FREQ
 
+#define TORQUE_CONTROL_ENABLE
 //#define SPEED_CONTROL_ENABLE
 
 
@@ -70,7 +71,14 @@
 #define ALIGN_CURRENT           0.4         /* Rotor alignment current vector magnitude */
 #define ALIGN_DELAY_MS          200         /* Delay (ms) for the rotor to align with stationary current vector */
 
+/* Communication parameters */
+#define COM_SPEED_MASK          (1 << 0)
+#define COM_CURRENT_MASK        (1 << 1)
+#define COM_DQ_MASK             (1 << 2)
+#define COM_ALPHA_BETA_MASK     (1 << 3)
 
+#define COM_TX_FREQUENCY        1
+#define COMM_TX_PRESCALER       MC_TORQUE_CNTR_FREQ / COM_TX_FREQUENCY
 
 typedef struct mc_input_signals_t
 {
