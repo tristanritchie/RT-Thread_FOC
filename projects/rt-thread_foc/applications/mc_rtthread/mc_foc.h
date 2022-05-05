@@ -36,12 +36,15 @@ typedef enum mc_foc_control_mode_s
     MC_FOC_MODE_SPEED_CNTRL
 } mc_foc_control_mode_s;
 
-
 typedef struct mc_foc_context_t
 {
     mc_foc_enable_state_s   enable_state;
-    rt_uint32_t             control_sync;
     rt_uint32_t             com_mode;
+    rt_uint32_t             control_sync;
 } mc_foc_context_t;
 
+
 int mc_foc_init(void);
+void mc_foc_enable(void);
+void mc_foc_disable(void);
+void mc_set_demand(float setpoint);

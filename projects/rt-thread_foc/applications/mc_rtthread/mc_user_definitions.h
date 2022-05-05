@@ -77,8 +77,8 @@
 #define COM_DQ_MASK             (1 << 2)
 #define COM_ALPHA_BETA_MASK     (1 << 3)
 
-#define COM_TX_FREQUENCY        1
-#define COMM_TX_PRESCALER       MC_TORQUE_CNTR_FREQ / COM_TX_FREQUENCY
+#define COM_TX_FREQUENCY        2.0f
+#define COMM_TX_PERIOD_MS       (int)(((float)(1 / COM_TX_FREQUENCY)) * 1000)
 
 typedef struct mc_input_signals_t
 {

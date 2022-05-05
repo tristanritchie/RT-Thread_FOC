@@ -31,6 +31,8 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
 rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size);
 void mc_foc_tasks(void *parameter);
 
+void mc_communicate(void);
+
 void mc_pwm_enable(struct rt_device_pwm *pwm_dev);
 void mc_pwm_disable(struct rt_device_pwm *pwm_dev);
 void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm);
@@ -69,18 +71,12 @@ int mc_foc_init(void)
 
     /* Create mem pointer */
     p_context = rt_malloc(sizeof(mc_foc_context_t));
+    p_context->com_mode = 0;
 
     rt_pin_mode(LED1, PIN_MODE_OUTPUT);
     rt_pin_mode(LED2, PIN_MODE_OUTPUT);
     rt_pin_mode(LED3, PIN_MODE_OUTPUT);
     rt_pin_mode(PIN_E0, PIN_MODE_OUTPUT);
-
-
-    adc_sem = rt_sem_create("adcsem", 0, RT_IPC_FLAG_PRIO);
-    if (adc_sem == RT_NULL)
-    {
-        LOG_D("sem create failed");
-    }
 
     foc_thread = rt_thread_create("foc_thread", mc_foc_tasks, RT_NULL, sizeof(foc_thread_stack), 1, 5);
     if (foc_thread != RT_NULL)
@@ -209,7 +205,6 @@ void mc_foc(void)
     }
 #endif /* SPEED_CONTROL_ENABLE */
 
-    rt_sem_release(adc_sem);
     return;
 }
 
@@ -249,14 +244,11 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
 
 void mc_foc_tasks(void *parameter)
 {
-    static rt_err_t result;
     while (1)
     {
-        result = rt_sem_take(adc_sem, RT_WAITING_FOREVER);
-        if(result == RT_EOK)
-        {
-
-        }
+        rt_thread_mdelay(COMM_TX_PERIOD_MS);
+        rt_pin_write(LED1, !rt_pin_read(LED1));
+        mc_communicate();
     }
 }
 
@@ -280,26 +272,6 @@ void mc_foc_disable(void)
     }
 }
 
-void mc_communicate(void)
-{
-    if (p_context->com_mode & COM_SPEED_MASK)
-    {
-
-    }
-    if (p_context->com_mode & COM_CURRENT_MASK)
-    {
-
-    }
-    if (p_context->com_mode & COM_DQ_MASK)
-    {
-
-    }
-    if (p_context->com_mode & COM_ALPHA_BETA_MASK)
-    {
-
-    }
-}
-
 void mc_set_demand(float setpoint)
 {
 #ifdef SPEED_CONTROL_ENABLE
@@ -315,6 +287,25 @@ void mc_set_demand(float setpoint)
 #endif /* SPEED_CONTROL_ENABLE */
 }
 
+void mc_communicate(void)
+{
+    if (p_context->com_mode & COM_SPEED_MASK)
+    {
+        rt_kprintf("%d \n", (rt_int32_t)input.speed);
+    }
+    if (p_context->com_mode & COM_CURRENT_MASK)
+    {
+        rt_kprintf("%d \t %d \t %d \n", (rt_int32_t)input.ia, (rt_int32_t)input.ib, (rt_int32_t)input.ic);
+    }
+    if (p_context->com_mode & COM_DQ_MASK)
+    {
+        rt_kprintf("%d \t %d \n", (rt_int32_t)transform.park.d_axis, (rt_int32_t)transform.park.q_axis);
+    }
+    if (p_context->com_mode & COM_ALPHA_BETA_MASK)
+    {
+        rt_kprintf("%d \t %d \n", (rt_int32_t)transform.clarke.alpha, (rt_int32_t)transform.clarke.beta);
+    }
+}
 
 /* Virtual COM interface (UART) */
 static int foc(int argc, char **argv)
