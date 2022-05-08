@@ -20,17 +20,6 @@ void mc_svpwm_time_calc(mc_svpwm_t * const svm)
     svm->ta = svm->tb + svm->t1;
 }
 
-/******************************************************************************/
-/*                      INTERFACE FUNCTIONS                                   */
-/******************************************************************************/
-
-/******************************************************************************/
-/* Function name: MCPWM_SVPWMGen                                              */
-/* Function parameters: None                                                  */
-/* Function return: None                                                      */
-/* Description: Determines sector based upon three reference                  */
-/*              vectors amplitude and updates duty.                           */
-/******************************************************************************/
 void mc_svpwm_gen(const mc_clarke_tansform_t *clarke, mc_svpwm_t *svm)
 {
     svm->vr1 = clarke->beta;
@@ -120,11 +109,3 @@ void mc_svpwm_gen(const mc_clarke_tansform_t *clarke, mc_svpwm_t *svm)
 }
 
 
-void mc_svm_init(mc_svpwm_t *svm)
-{
-    svm->pwm1 = PWM_NEUTRAL;
-    svm->pwm2 = PWM_NEUTRAL;
-    svm->pwm3 = PWM_NEUTRAL;
-
-    svm->period = PWM_PERIOD;
-}

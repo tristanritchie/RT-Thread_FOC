@@ -31,15 +31,19 @@ typedef struct mc_svpwm_t
     float ta;
     float tb;
     float tc;
-    uint32_t neutral_pwm;
     uint32_t pwm1;
     uint32_t pwm2;
     uint32_t pwm3;
 } mc_svpwm_t;
 
-
+#define SVPWM_INIT (mc_svpwm_t) \
+{                               \
+    .pwm1 = PWM_NEUTRAL,        \
+    .pwm2 = PWM_NEUTRAL,        \
+    .pwm3 = PWM_NEUTRAL,        \
+    .period = PWM_PERIOD,       \
+}
 
 void mc_svpwm_gen(const mc_clarke_tansform_t *clarke, mc_svpwm_t *svm);
-void mc_svm_init(mc_svpwm_t *svm);
 
 #endif /* APPLICATIONS_MC_RTTHREAD_MC_SVM_H_ */

@@ -1,0 +1,25 @@
+import rtconfig
+from building import *
+
+cwd = GetCurrentDir()
+
+src = Glob('../applications/*.c') + Glob('../drivers/*.c')
+
+CPPPATH = [
+	cwd,
+	cwd + '/../drivers',
+	str(Dir('#'))
+]
+
+CPPDEFINES = [
+	'SOC_FAMILY_STM32',
+	'SOC_SERIES_STM32F4',
+	'USE_HAL_DRIVER',
+	'STM32F429xx',
+	'm     ',
+]
+
+group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+
+Return('group')
+

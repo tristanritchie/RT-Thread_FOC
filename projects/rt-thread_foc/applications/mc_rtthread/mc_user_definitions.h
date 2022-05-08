@@ -34,7 +34,7 @@
 
 
 /* PWM configuration */
-#define PWM_PERIOD              50755               /* 25kHz PWM */
+#define PWM_PERIOD              50755               /* 20kHz PWM */
 #define PWM_NEUTRAL             (PWM_PERIOD/2)      /* 50% duty cycle */
 
 #define PWM_DEV_NAME            "pwm1"      /* RT-Thread PWM device registration name */
@@ -51,7 +51,7 @@
 #define ADC2_CH_RANK            1           /* Phase A ADC injected (priority) conversion channel rank */
 
 #define ADC_MAX_COUNT           4095        /*  ADC Resolution */
-#define ADC_REF_VOLTAGE         3.3         /*  ADC reference voltage */
+#define ADC_REF_VOLTAGE         3.3f         /*  ADC reference voltage */
 
 #define ADC_MAX_CURRENT         1           /* Absolute current measurement range of ADC */
 #define ADC_CURRENT_SCALE       ADC_MAX_CURRENT/(ADC_MAX_COUNT)
@@ -68,7 +68,7 @@
 
 
 /* Rotor alignment configuration */
-#define ALIGN_CURRENT           0.4         /* Rotor alignment current vector magnitude */
+#define ALIGN_CURRENT           0.4f         /* Rotor alignment current vector magnitude */
 #define ALIGN_DELAY_MS          200         /* Delay (ms) for the rotor to align with stationary current vector */
 
 /* Communication parameters */
@@ -79,6 +79,23 @@
 
 #define COM_TX_FREQUENCY        2.0f
 #define COMM_TX_PERIOD_MS       (int)(((float)(1 / COM_TX_FREQUENCY)) * 1000)
+
+
+/* Control system parameters*/
+#define D_AXIS_CONTROLLER_KP    0.02f       /* D-term (proportional gain) */
+#define D_AXIS_CONTROLLER_KI    0.0002f     /* I-term (integral gain) */
+#define D_AXIS_CONTROLLER_KC    0.5f        /* C-term (anti-windup gain) */
+#define D_AXIS_CONTROLLER_MAX   0.98f       /* Max output */
+
+#define Q_AXIS_CONTROLLER_KP    0.02f
+#define Q_AXIS_CONTROLLER_KI    0.0002f
+#define Q_AXIS_CONTROLLER_KC    0.5f
+#define Q_AXIS_CONTROLLER_MAX   0.98f
+
+#define SPEED_CONTROLLER_KP    0.002f
+#define SPEED_CONTROLLER_KI    0.00002f
+#define SPEED_CONTROLLER_KC    0.5f
+#define SPEED_CONTROLLER_MAX   0.98f
 
 typedef struct mc_input_signals_t
 {

@@ -40,7 +40,6 @@ void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm);
 void mc_adc_enable(rt_adc_device_t adc1_dev, rt_adc_device_t adc2_dev);
 void mc_adc_disable(rt_adc_device_t adc1_dev, rt_adc_device_t adc2_dev);
 
-
 static mc_foc_context_t *p_context;
 
 /* RT-Thread peripheral device handles */
@@ -49,18 +48,17 @@ static rt_adc_device_t adc1_dev, adc2_dev;
 static rt_device_t pulse_encoder_dev;
 
 /* FOC parameter structures */
-static mc_svpwm_t svm;
 static mc_input_signals_t input;
 static mc_tansform_t transform;
 
-static mc_pi_controller_t d_axis_controller;
-static mc_pi_controller_t q_axis_controller;
+static mc_svpwm_t svm = SVPWM_INIT;
+static mc_pi_controller_t d_axis_controller = D_AXIS_CONTROLLER_INIT;
+static mc_pi_controller_t q_axis_controller = Q_AXIS_CONTROLLER_INIT;
 #ifdef SPEED_CONTROL_ENABLE
-static mc_pi_controller_t speed_controller;
+static mc_pi_controller_t speed_controller = SPEED_CONTROLLER_INIT;
 #endif
 
-/* FOC tasks thread */
-rt_sem_t adc_sem;
+/* FOC thread */
 rt_thread_t foc_thread;
 static char foc_thread_stack[1024];
 
@@ -73,6 +71,7 @@ int mc_foc_init(void)
     p_context = rt_malloc(sizeof(mc_foc_context_t));
     p_context->com_mode = 0;
 
+    /* Debug GPIOs */
     rt_pin_mode(LED1, PIN_MODE_OUTPUT);
     rt_pin_mode(LED2, PIN_MODE_OUTPUT);
     rt_pin_mode(LED3, PIN_MODE_OUTPUT);
@@ -129,17 +128,14 @@ int mc_foc_init(void)
     /* Initialize PI controller block structure */
 
     /* Initialize default PWM period/pulse*/
-    mc_svm_init(&svm);
     /* Enable peripherals*/
     mc_adc_enable(adc1_dev, adc2_dev);
     mc_pwm_enable(pwm_dev);
 
     /* Forced alignment of rotor */
-    //mc_rotor_alignment(&input, &transform, &svm);
+    mc_rotor_alignment(&input, &transform, &svm);
     /* Reset encoder to initial position 0 */
     rt_device_control(pulse_encoder_dev, PULSE_ENCODER_CMD_CLEAR_COUNT, RT_NULL);
-    mc_svm_init(&svm);
-    mc_pwm_set(pwm_dev, &svm);
 
     /* Register ADC callback */
     rt_device_set_rx_indicate(&adc1_dev->parent, mc_adc_callback);
@@ -213,7 +209,7 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
 {
     transform->park.d_axis = 0;
     transform->park.q_axis = ALIGN_CURRENT;
-
+    /* Set inital rotor angle - first pass */
     input->e_angle = M_PI;
     mc_calc_sin_cos(input->e_angle, &transform->sin_angle, &transform->cos_angle);
 
@@ -221,11 +217,12 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     mc_inverse_park_transform(transform);
     /* SVPWM */
     mc_svpwm_gen(&transform->clarke, svm);
-    /*Update PWM duty cycles*/
+    /* Update PWM duty cycles*/
     mc_pwm_set(pwm_dev, svm);
-
+    /* Delay for mechanical alignment */
     rt_thread_mdelay(ALIGN_DELAY_MS);
 
+    /* Set starting rotor angle - second pass */
     input->e_angle = 3 * M_PI / 2;
     mc_calc_sin_cos(input->e_angle, &transform->sin_angle, &transform->cos_angle);
 
@@ -233,10 +230,14 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     mc_inverse_park_transform(transform);
     /* SVPWM */
     mc_svpwm_gen(&transform->clarke, svm);
-    /*Update PWM duty cycles*/
+    /* Update PWM duty cycles*/
     mc_pwm_set(pwm_dev, svm);
-
+    /* Delay for mechanical alignment */
     rt_thread_mdelay(ALIGN_DELAY_MS);
+
+    /* Cut power to motor */
+    *svm = SVPWM_INIT;
+    mc_pwm_set(pwm_dev, svm);
 
     return;
 }

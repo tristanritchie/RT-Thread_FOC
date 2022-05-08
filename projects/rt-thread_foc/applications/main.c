@@ -18,17 +18,13 @@
 
 int main(void)
 {
-    if (mc_foc_init() != RT_EOK);
-    {
-        LOG_D("FOC init failed");
-    }
+    mc_foc_init();
 
     int count = 1;
 
-    while (count++)
+    while (count)
     {
-        //LOG_D("Hello RT-Thread!");
-        rt_thread_mdelay(1000);
+        rt_thread_suspend(rt_thread_self());
     }
 
     return RT_EOK;
