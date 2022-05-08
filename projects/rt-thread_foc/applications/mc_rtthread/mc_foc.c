@@ -29,6 +29,9 @@
 void mc_foc(void);
 void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_svpwm_t *svm);
 rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size);
+void mc_foc_tasks(void *parameter);
+
+void mc_communicate(void);
 
 void mc_pwm_enable(struct rt_device_pwm *pwm_dev);
 void mc_pwm_disable(struct rt_device_pwm *pwm_dev);
@@ -45,13 +48,19 @@ static rt_adc_device_t adc1_dev, adc2_dev;
 static rt_device_t pulse_encoder_dev;
 
 /* FOC parameter structures */
-static mc_svpwm_t svm;
 static mc_input_signals_t input;
 static mc_tansform_t transform;
 
-static mc_pi_controller_t d_axis_controller;
-static mc_pi_controller_t q_axis_controller;
-static mc_pi_controller_t speed_controller;
+static mc_svpwm_t svm = SVPWM_INIT;
+static mc_pi_controller_t d_axis_controller = D_AXIS_CONTROLLER_INIT;
+static mc_pi_controller_t q_axis_controller = Q_AXIS_CONTROLLER_INIT;
+#ifdef SPEED_CONTROL_ENABLE
+static mc_pi_controller_t speed_controller = SPEED_CONTROLLER_INIT;
+#endif
+
+/* FOC thread */
+rt_thread_t foc_thread;
+static char foc_thread_stack[1024];
 
 
 int mc_foc_init(void)
@@ -60,11 +69,19 @@ int mc_foc_init(void)
 
     /* Create mem pointer */
     p_context = rt_malloc(sizeof(mc_foc_context_t));
+    p_context->com_mode = 0;
 
+    /* Debug GPIOs */
     rt_pin_mode(LED1, PIN_MODE_OUTPUT);
     rt_pin_mode(LED2, PIN_MODE_OUTPUT);
     rt_pin_mode(LED3, PIN_MODE_OUTPUT);
     rt_pin_mode(PIN_E0, PIN_MODE_OUTPUT);
+
+    foc_thread = rt_thread_create("foc_thread", mc_foc_tasks, RT_NULL, sizeof(foc_thread_stack), 1, 5);
+    if (foc_thread != RT_NULL)
+    {
+        rt_thread_startup(foc_thread);
+    }
 
     /* RT-Thread driver device object initialization */
     /* Register phase A current measurement ADC */
@@ -111,22 +128,19 @@ int mc_foc_init(void)
     /* Initialize PI controller block structure */
 
     /* Initialize default PWM period/pulse*/
-    mc_svm_init(&svm);
     /* Enable peripherals*/
     mc_adc_enable(adc1_dev, adc2_dev);
     mc_pwm_enable(pwm_dev);
 
     /* Forced alignment of rotor */
-    //mc_rotor_alignment(&input, &transform, &svm);
+    mc_rotor_alignment(&input, &transform, &svm);
     /* Reset encoder to initial position 0 */
     rt_device_control(pulse_encoder_dev, PULSE_ENCODER_CMD_CLEAR_COUNT, RT_NULL);
-    mc_svm_init(&svm);
-    mc_pwm_set(pwm_dev, &svm);
 
     /* Register ADC callback */
     rt_device_set_rx_indicate(&adc1_dev->parent, mc_adc_callback);
     /* Enable FOC */
-    p_context->state = MC_FOC_ENABLE;
+    p_context->enable_state = MC_FOC_ENABLE;
 
  __exit:
      return result;
@@ -136,7 +150,7 @@ int mc_foc_init(void)
 rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size)
 {
     HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
-    if (p_context->state == MC_FOC_ENABLE)
+    if (p_context->enable_state == MC_FOC_ENABLE)
     {
         mc_foc();
     }
@@ -195,7 +209,7 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
 {
     transform->park.d_axis = 0;
     transform->park.q_axis = ALIGN_CURRENT;
-
+    /* Set inital rotor angle - first pass */
     input->e_angle = M_PI;
     mc_calc_sin_cos(input->e_angle, &transform->sin_angle, &transform->cos_angle);
 
@@ -203,11 +217,12 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     mc_inverse_park_transform(transform);
     /* SVPWM */
     mc_svpwm_gen(&transform->clarke, svm);
-    /*Update PWM duty cycles*/
+    /* Update PWM duty cycles*/
     mc_pwm_set(pwm_dev, svm);
-
+    /* Delay for mechanical alignment */
     rt_thread_mdelay(ALIGN_DELAY_MS);
 
+    /* Set starting rotor angle - second pass */
     input->e_angle = 3 * M_PI / 2;
     mc_calc_sin_cos(input->e_angle, &transform->sin_angle, &transform->cos_angle);
 
@@ -215,37 +230,96 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     mc_inverse_park_transform(transform);
     /* SVPWM */
     mc_svpwm_gen(&transform->clarke, svm);
-    /*Update PWM duty cycles*/
+    /* Update PWM duty cycles*/
     mc_pwm_set(pwm_dev, svm);
-
+    /* Delay for mechanical alignment */
     rt_thread_mdelay(ALIGN_DELAY_MS);
+
+    /* Cut power to motor */
+    *svm = SVPWM_INIT;
+    mc_pwm_set(pwm_dev, svm);
 
     return;
 }
 
 
+void mc_foc_tasks(void *parameter)
+{
+    while (1)
+    {
+        rt_thread_mdelay(COMM_TX_PERIOD_MS);
+        rt_pin_write(LED1, !rt_pin_read(LED1));
+        mc_communicate();
+    }
+}
+
+void mc_foc_enable(void)
+{
+    if (p_context->enable_state != MC_FOC_ENABLE)
+    {
+        p_context->enable_state = MC_FOC_ENABLE;
+        mc_adc_enable(adc1_dev, adc2_dev);
+        mc_pwm_enable(pwm_dev);
+    }
+}
+
+void mc_foc_disable(void)
+{
+    if (p_context->enable_state != MC_FOC_DISABLE)
+    {
+        p_context->enable_state = MC_FOC_DISABLE;
+        mc_adc_disable(adc1_dev, adc2_dev);
+        mc_pwm_disable(pwm_dev);
+    }
+}
+
+void mc_set_demand(float setpoint)
+{
+#ifdef SPEED_CONTROL_ENABLE
+    mc_impose_limits(&setpoint, -1000, 1000);
+    speed_controller.in_ref = setpoint;
+    rt_kprintf("Speed demand set: %.3f", setpoint);
+#else
+#ifdef TORQUE_CONTROL_ENABLE
+    mc_impose_limits(&setpoint, -1, 1);
+    d_axis_controller.in_ref = setpoint;
+    rt_kprintf("Torque demand set: %.3f", setpoint);
+#endif /* TORQUE_CONTROL_ENABLE */
+#endif /* SPEED_CONTROL_ENABLE */
+}
+
+void mc_communicate(void)
+{
+    if (p_context->com_mode & COM_SPEED_MASK)
+    {
+        rt_kprintf("%d \n", (rt_int32_t)input.speed);
+    }
+    if (p_context->com_mode & COM_CURRENT_MASK)
+    {
+        rt_kprintf("%d \t %d \t %d \n", (rt_int32_t)input.ia, (rt_int32_t)input.ib, (rt_int32_t)input.ic);
+    }
+    if (p_context->com_mode & COM_DQ_MASK)
+    {
+        rt_kprintf("%d \t %d \n", (rt_int32_t)transform.park.d_axis, (rt_int32_t)transform.park.q_axis);
+    }
+    if (p_context->com_mode & COM_ALPHA_BETA_MASK)
+    {
+        rt_kprintf("%d \t %d \n", (rt_int32_t)transform.clarke.alpha, (rt_int32_t)transform.clarke.beta);
+    }
+}
+
 /* Virtual COM interface (UART) */
 static int foc(int argc, char **argv)
 {
-    rt_uint32_t demand;
-
     if (argc > 1)
     {
         if (!strcmp(argv[1], "enable"))
         {
-            p_context->state = MC_FOC_ENABLE;
+            mc_foc_enable();
         }
         else if (!strcmp(argv[1], "disable"))
         {
-            p_context->state = MC_FOC_DISABLE;
-        }
-        else if (!strcmp(argv[1], "reset"))
-        {
-            p_context->state = MC_FOC_DISABLE;
-
-            // reset here
-
-
+            mc_foc_disable();
         }
         else if (!strcmp(argv[1], "print"))
         {
@@ -254,18 +328,27 @@ static int foc(int argc, char **argv)
                 if (!strcmp(argv[2], "sp"))
                 {
                     // print speed
+                    p_context->com_mode |= COM_SPEED_MASK;
                 }
                 if (!strcmp(argv[2], "cur"))
                 {
                     // print current
+                    p_context->com_mode |= COM_CURRENT_MASK;
                 }
                 if (!strcmp(argv[2], "dq"))
                 {
                     // print dq currents
+                    p_context->com_mode |= COM_DQ_MASK;
                 }
                 if (!strcmp(argv[2], "ab"))
                 {
                     // print alpha/beta currents
+                    p_context->com_mode |= COM_ALPHA_BETA_MASK;
+                }
+                if (!strcmp(argv[2], "stop"))
+                {
+                    // stop print
+                    p_context->com_mode = 0;
                 }
             }
             else
@@ -277,28 +360,17 @@ static int foc(int argc, char **argv)
                 rt_kprintf("                        'ab' for alpha/beta axis and rotor angle\n");
             }
         }
-        else if (!strcmp(argv[1], "speed"))
+        else if (!strcmp(argv[1], "s"))
         {
             if (argc == 3)
             {
-                demand = atoi(argv[2]);
-                // set demand speed
+                // set demand
+                float demand = atof(argv[2]);
+                mc_set_demand(demand);
             }
             else
             {
-                rt_kprintf("foc speed <demand>  - set demand speed\n");
-            }
-        }
-        else if (!strcmp(argv[1], "torque"))
-        {
-            if (argc == 3)
-            {
-                demand = atoi(argv[2]);
-                // set demand torque
-            }
-            else
-            {
-                rt_kprintf("foc torque <demand>  - set demand speed\n");
+                rt_kprintf("foc s <demand>  - set demand speed or torque\n");
             }
         }
         else
@@ -310,11 +382,9 @@ static int foc(int argc, char **argv)
     else
     {
         rt_kprintf("Usage: \n");
-        rt_kprintf("foc speed <demand>  - set demand speed\n");
-        rt_kprintf("foc torque <demand> - set demand torque\n");
+        rt_kprintf("foc s <demand>      - set demand speed or torque\n\n");
         rt_kprintf("foc enable          - enable output\n");
         rt_kprintf("foc disable         - disable output\n");
-        rt_kprintf("foc reset           - reinitialize foc\n");
         rt_kprintf("foc print <param>   - print parameter\n");
         rt_kprintf("                        'sp' for speed\n");
         rt_kprintf("                        'cur' for phase currents\n");

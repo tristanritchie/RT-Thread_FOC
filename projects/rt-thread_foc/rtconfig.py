@@ -31,3 +31,13 @@ CPATH = ''
 LPATH = ''
 CXXFLAGS = ''
 POST_ACTION = ''
+
+
+# modified by rtthread.studio.vscode
+DEVICE = ' -mcpu=cortex-m4 -mthumb -ffunction-sections -fdata-sections'
+CFLAGS = DEVICE + ' -Dgcc'
+CFLAGS += ' -O0 -gdwarf-2 -g'
+CXXFLAGS = CFLAGS
+AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp -Wa,-mimplicit-it=thumb '
+AFLAGS += ' -gdwarf-2'
+POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'

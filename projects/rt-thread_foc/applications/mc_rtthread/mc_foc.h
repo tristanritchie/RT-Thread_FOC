@@ -16,23 +16,35 @@
 #include "mc_control.h"
 #include "mc_transform.h"
 
+
+typedef enum mc_demand_set_state_s
+{
+    MC_DEMAND_TORQUE = 0x01,
+    MC_DEMAND_SPEED
+} mc_demand_set_state_s;
+
 typedef enum mc_foc_enable_state_s
 {
     MC_FOC_ENABLE,
     MC_FOC_DISABLE
 } mc_foc_enable_state_s;
 
-typedef enum mc_foc_control_state_s
+typedef enum mc_foc_control_mode_s
 {
     MC_FOC_MODE_OPEN_LOOP,
     MC_FOC_MODE_TORQUE_CNTRL,
     MC_FOC_MODE_SPEED_CNTRL
-} mc_foc_control_state_s;
+} mc_foc_control_mode_s;
 
 typedef struct mc_foc_context_t
 {
-    mc_foc_enable_state_s state;
-    rt_uint32_t control_sync;
+    mc_foc_enable_state_s   enable_state;
+    rt_uint32_t             com_mode;
+    rt_uint32_t             control_sync;
 } mc_foc_context_t;
 
+
 int mc_foc_init(void);
+void mc_foc_enable(void);
+void mc_foc_disable(void);
+void mc_set_demand(float setpoint);

@@ -41,13 +41,6 @@ void mc_pi_control(mc_pi_controller_t *const param)
 }
 
 
-/******************************************************************************/
-/* Function name: MCLIB_ResetPIParameters                                     */
-/* Function parameters: param - PI parameter structure                        */
-/* Function return: None                                                      */
-/* Description:                                                               */
-/* Reset control parameters                                                   */
-/******************************************************************************/
 void mc_reset_controller(mc_pi_controller_t *const param)
 {
     /**************** PI D Term ***********************************************/
