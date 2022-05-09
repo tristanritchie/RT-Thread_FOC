@@ -994,7 +994,7 @@ RTM_EXPORT(rt_critical_level);
 /**
  * @brief callback-thread implementation: for direct context switching from ISR
  */
-void rt_schedule_from_ISR(struct rt_thread *to_thread)
+void rt_schedule_from_isr(struct rt_thread *to_thread)
 {
     rt_base_t level;
     struct rt_thread *from_thread;
@@ -1031,6 +1031,51 @@ void rt_schedule_from_ISR(struct rt_thread *to_thread)
              RT_NAME_MAX, from_thread->name, from_thread->sp));
 
     RT_DEBUG_LOG(RT_DEBUG_SCHEDULER, ("switch in interrupt\n"));
+
+    rt_hw_context_switch_interrupt((rt_ubase_t)&from_thread->sp,
+            (rt_ubase_t)&to_thread->sp);
+
+    /* enable interrupt */
+    rt_hw_interrupt_enable(level);
+
+    return;
+}
+
+void rt_callback_thread_enter(struct rt_thread *to_thread)
+{
+    rt_base_t level;
+    struct rt_thread *from_thread;
+
+    /* disable interrupt */
+    level = rt_hw_interrupt_disable();
+
+
+    /* if the destination thread is not the same as current thread */
+    from_thread         = rt_current_thread;
+    //rt_current_thread   = to_thread;
+
+
+    rt_hw_context_switch_interrupt((rt_ubase_t)&from_thread->sp,
+            (rt_ubase_t)&to_thread->sp);
+
+    /* enable interrupt */
+    rt_hw_interrupt_enable(level);
+
+    return;
+}
+
+void rt_callback_thread_leave(struct rt_thread *from_thread)
+{
+    rt_base_t level;
+    struct rt_thread *to_thread;
+
+    /* disable interrupt */
+    level = rt_hw_interrupt_disable();
+
+
+    /* if the destination thread is not the same as current thread */
+    to_thread         = rt_current_thread;
+
 
     rt_hw_context_switch_interrupt((rt_ubase_t)&from_thread->sp,
             (rt_ubase_t)&to_thread->sp);
