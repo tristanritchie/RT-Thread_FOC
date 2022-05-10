@@ -994,7 +994,7 @@ RTM_EXPORT(rt_critical_level);
 /**
  * @brief callback-thread implementation: for direct context switching from ISR
  */
-void rt_schedule_from_isr(struct rt_thread *to_thread)
+void rt_schedule_fast(struct rt_thread *to_thread)
 {
     rt_base_t level;
     struct rt_thread *from_thread;
@@ -1002,36 +1002,34 @@ void rt_schedule_from_isr(struct rt_thread *to_thread)
     /* disable interrupt */
     level = rt_hw_interrupt_disable();
 
-    /* check the scheduler is enabled or not */
-
-    rt_ubase_t highest_ready_priority;
-
     rt_current_thread->stat &= ~RT_THREAD_STAT_YIELD_MASK;
 
-    /* if the destination thread is not the same as current thread */
     rt_current_priority = (rt_uint8_t)to_thread->current_priority;
     from_thread         = rt_current_thread;
     rt_current_thread   = to_thread;
 
     RT_OBJECT_HOOK_CALL(rt_scheduler_hook, (from_thread, to_thread));
 
-    rt_schedule_insert_thread(from_thread);
+    /* READY from_thread, insert to ready queue */
+    from_thread->stat = RT_THREAD_READY | (from_thread->stat & ~RT_THREAD_STAT_MASK);
+    /* insert from_thread to ready list */
+    rt_list_insert_before(&(rt_thread_priority_table[from_thread->current_priority]),
+                          &(from_thread->tlist));
 
-    rt_schedule_remove_thread(to_thread);
+    /* set priority mask */
+
+    rt_thread_ready_priority_group |= from_thread->number_mask;
+
+    /* remove thread from ready list */
+    rt_list_remove(&(to_thread->tlist));
+    if (rt_list_isempty(&(rt_thread_priority_table[to_thread->current_priority])))
+    {
+        rt_thread_ready_priority_group &= ~to_thread->number_mask;
+    }
 
     to_thread->stat = RT_THREAD_RUNNING | (to_thread->stat & ~RT_THREAD_STAT_MASK);
 
     /* switch to new thread */
-    RT_DEBUG_LOG(RT_DEBUG_SCHEDULER,
-            ("[%d]switch to priority#%d "
-             "thread:%.*s(sp:0x%08x), "
-             "from thread:%.*s(sp: 0x%08x)\n",
-             rt_interrupt_nest, highest_ready_priority,
-             RT_NAME_MAX, to_thread->name, to_thread->sp,
-             RT_NAME_MAX, from_thread->name, from_thread->sp));
-
-    RT_DEBUG_LOG(RT_DEBUG_SCHEDULER, ("switch in interrupt\n"));
-
     rt_hw_context_switch_interrupt((rt_ubase_t)&from_thread->sp,
             (rt_ubase_t)&to_thread->sp);
 

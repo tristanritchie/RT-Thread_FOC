@@ -185,7 +185,7 @@ void rt_schedule(void);
 void rt_schedule_insert_thread(struct rt_thread *thread);
 void rt_schedule_remove_thread(struct rt_thread *thread);
 
-void rt_schedule_from_isr(struct rt_thread *to_thread);
+void rt_schedule_fast(struct rt_thread *to_thread);
 void rt_callback_thread_enter(struct rt_thread *to_thread);     //unstable
 void rt_callback_thread_leave(struct rt_thread *from_thread);   //unstable
 
