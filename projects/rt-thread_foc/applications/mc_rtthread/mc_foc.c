@@ -48,8 +48,8 @@ static rt_adc_device_t adc1_dev, adc2_dev;
 static rt_device_t pulse_encoder_dev;
 
 /* FOC parameter structures */
-static mc_input_signals_t input;
-static mc_tansform_t transform;
+static mc_input_signals_t input = {0};
+static mc_tansform_t transform = {0};
 
 static mc_svpwm_t svm = SVPWM_INIT;
 static mc_pi_controller_t d_axis_controller = D_AXIS_CONTROLLER_INIT;
@@ -135,7 +135,9 @@ int mc_foc_init(void)
     /* Forced alignment of rotor */
     mc_rotor_alignment(&input, &transform, &svm);
     /* Reset encoder to initial position 0 */
+    rt_device_control(pulse_encoder_dev, PULSE_ENCODER_CMD_ENABLE, RT_NULL);
     rt_device_control(pulse_encoder_dev, PULSE_ENCODER_CMD_CLEAR_COUNT, RT_NULL);
+    input.e_angle = 0;
 
     /* Register ADC callback */
     rt_device_set_rx_indicate(&adc1_dev->parent, mc_adc_callback);

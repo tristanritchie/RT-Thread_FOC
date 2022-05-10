@@ -63,7 +63,7 @@
 /* Quadrature encoder configuration */
 #define QE_DEV_NAME             "pulse2"
 #define QE_COUNT_PER_EREV       ((MOTOR_QE_PPR * 4) / MOTOR_NUM_POLE_PAIRS)     /* Encoder edges per electrical revolution */
-#define QE_COUNT_TO_RAD         ((2 * M_PI) / QE_COUNT_PER_EREV)                /* Encoder edge count to electrical angle in radians */
+#define QE_COUNT_TO_RAD         0.0061328125f //((2 * M_PI) / QE_COUNT_PER_EREV)                /* Encoder edge count to electrical angle in radians */
 #define QE_COUNT_TO_RADS_PER_S  (MC_SPEED_CNTR_FREQ * QE_COUNT_TO_RAD)          /* Encoder edge count to radians per second */
 
 
@@ -104,7 +104,8 @@ typedef struct mc_input_signals_t
     float ic;
     float e_angle;
     float speed;
-    rt_uint32_t qe_count_sum;
+    rt_int32_t qe_count;
+    rt_int32_t qe_count_sum;
     rt_uint32_t a_offset;
     rt_uint32_t b_offset;
     rt_uint32_t c_offset;
