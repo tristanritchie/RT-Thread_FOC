@@ -10,15 +10,15 @@
 
 typedef struct mc_pi_controller_t
 {
-    float kp;
-    float ki;
-    float kc;
-    float out_max;
-    float out_min;
-    float d_sum;
-    float in_ref;
-    float in_meas;
-    float out;
+    float kp;       /* Proportional gain */
+    float ki;       /* Integral gain */
+    float kc;       /* Anti-windup */
+    float out_max;  /* Maximum output value */
+    float out_min;  /* Minimum output value */
+    float d_sum;    /* Error sum */
+    float in_ref;   /* Demand/setpoint */
+    float in_meas;  /* Measured input */
+    float out;      /* Controller output */
 } mc_pi_controller_t;
 
 #ifdef TORQUE_CONTROL_ENABLE

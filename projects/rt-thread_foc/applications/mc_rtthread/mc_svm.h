@@ -22,18 +22,18 @@
 
 typedef struct mc_svpwm_t
 {
-    float period;
-    float vr1;
-    float vr2;
-    float vr3;
-    float t1;
-    float t2;
-    float ta;
-    float tb;
-    float tc;
-    uint32_t pwm1;
-    uint32_t pwm2;
-    uint32_t pwm3;
+    float period;   /* PWM period */
+    float vr1;      /* Inverse Clarke transform phase A */
+    float vr2;      /* Inverse Clarke transform phase B */
+    float vr3;      /* Inverse Clarke transform phase C */
+    float t1;       /* Time applying first space vector */
+    float t2;       /* Time applying second space vector */
+    float ta;       /* Channel 1 precise ON time (duty cycle) */
+    float tb;       /* Channel 2 precise ON time (duty cycle) */
+    float tc;       /* Channel 3 precise ON time (duty cycle) */
+    uint32_t pwm1;  /* Channel 1 duty cycle */
+    uint32_t pwm2;  /* Channel 2 duty cycle */
+    uint32_t pwm3;  /* Channel 3 duty cycle */
 } mc_svpwm_t;
 
 #define SVPWM_INIT (mc_svpwm_t) \
