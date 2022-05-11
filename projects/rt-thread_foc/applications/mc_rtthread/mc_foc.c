@@ -186,6 +186,7 @@ void mc_foc(void)
 
     /* Read encoder */
     mc_read_qe(pulse_encoder_dev, &input);
+    mc_wrap_angle(&input.e_angle);
 
     /* Clarke and Park transform */
     mc_clarke_park_transform(&input, &transform);
