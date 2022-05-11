@@ -89,7 +89,6 @@ float cosine_table[TABLE_SIZE] =
 };
 
 
-
 void mc_calc_sin_cos(float const rotor_angle, float* sin_angle, float* cos_angle)
 {
     float angle = rotor_angle;
@@ -156,8 +155,6 @@ void mc_wrap_angle(float * const angle)
     }
 }
 
-
-
 void mc_linear_ramp(float * const input, const float step_size, const float final_val)
 {
     if ((*input + step_size ) < final_val )
@@ -174,7 +171,6 @@ void mc_linear_ramp(float * const input, const float step_size, const float fina
     }
 }
 
-
 void mc_impose_limits(float * const input, const float limit_lower, const float limit_upper)
 {
     if( *input > limit_upper )
@@ -186,8 +182,6 @@ void mc_impose_limits(float * const input, const float limit_lower, const float 
         *input  = limit_lower;
     }
 }
-
-
 
 void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output)
 {
@@ -203,14 +197,6 @@ void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output)
                         + output->clarke.beta * output->cos_angle;
 }
 
-/******************************************************************************/
-/* Function name: MCLIB_InvParkTransform                                      */
-/* Function parameters: input - park transform inputs                         */
-/*                      output - clarke transform output                      */
-/*                      position - rotor angle                                */
-/* Function return: None                                                      */
-/* Description: Inverse Park Transformation.                                  */
-/******************************************************************************/
 void mc_inverse_park_transform(mc_tansform_t *transform)
 {
      transform->clarke.alpha =  transform->park.d_axis * transform->cos_angle - transform->park.q_axis * transform->sin_angle;
