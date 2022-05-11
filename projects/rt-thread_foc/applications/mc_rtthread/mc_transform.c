@@ -10,9 +10,8 @@
 #define ANGLE_STEP              (TOTAL_SINE_TABLE_ANGLE / (float)TABLE_SIZE)
 #define ONE_BY_ANGLE_STEP       (1 / ANGLE_STEP)
 
-/******************************************************************************/
-/*                   SIN Table  256  -  0.0244rad resolution                            */
-/******************************************************************************/
+
+/* SIN Table  256  -  0.0244rad resolution */
 float sine_table[TABLE_SIZE] =
 {
     0.000000,  0.024541,  0.049068,  0.073565,  0.098017,  0.122411,  0.146730,  0.170962,
@@ -49,9 +48,8 @@ float sine_table[TABLE_SIZE] =
    -0.195090, -0.170962, -0.146730, -0.122411, -0.098017, -0.073565, -0.049068, -0.024541
 };
 
-/******************************************************************************/
-/*                   COS Table  -  0.0244rad resolution                                     */
-/******************************************************************************/
+
+/* COS Table  -  0.0244rad resolution */
 float cosine_table[TABLE_SIZE] =
 {
     1.000000,  0.999699,  0.998795,  0.997290,  0.995185,  0.992480,  0.989177,  0.985278,
@@ -137,6 +135,7 @@ void mc_calc_sin_cos(float const rotor_angle, float* sin_angle, float* cos_angle
     y1 = cosine_table[y0_index_next];
     *cos_angle = y0 + ((y1 - y0) * temp);
 
+    return;
 }
 
 void mc_wrap_angle(float * const angle)
@@ -149,10 +148,8 @@ void mc_wrap_angle(float * const angle)
     {
         *angle += TOTAL_SINE_TABLE_ANGLE;
     }
-    else
-    {
-       /* Do nothing */
-    }
+
+    return;
 }
 
 void mc_linear_ramp(float * const input, const float step_size, const float final_val)
@@ -169,6 +166,8 @@ void mc_linear_ramp(float * const input, const float step_size, const float fina
     {
       *input = final_val;
     }
+
+    return;
 }
 
 void mc_impose_limits(float * const input, const float limit_lower, const float limit_upper)
@@ -181,6 +180,8 @@ void mc_impose_limits(float * const input, const float limit_lower, const float 
     {
         *input  = limit_lower;
     }
+
+    return;
 }
 
 void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output)
@@ -195,11 +196,15 @@ void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output)
 
     output->park.d_axis = -output->clarke.alpha * output->sin_angle
                         + output->clarke.beta * output->cos_angle;
+
+    return;
 }
 
 void mc_inverse_park_transform(mc_tansform_t *transform)
 {
      transform->clarke.alpha =  transform->park.d_axis * transform->cos_angle - transform->park.q_axis * transform->sin_angle;
      transform->clarke.beta  =  transform->park.d_axis * transform->sin_angle + transform->park.q_axis * transform->cos_angle;
+
+     return;
 }
 
