@@ -62,6 +62,11 @@ static mc_pi_controller_t speed_controller = SPEED_CONTROLLER_INIT;
 rt_thread_t foc_thread;
 static char foc_thread_stack[1024];
 
+/* Mailbox control block */
+static struct rt_mailbox foc_mb;
+/* Memory pool for mails storage */
+static char mb_pool[128];
+
 
 int mc_foc_init(void)
 {
@@ -77,11 +82,24 @@ int mc_foc_init(void)
     rt_pin_mode(LED3, PIN_MODE_OUTPUT);
     rt_pin_mode(PIN_E0, PIN_MODE_OUTPUT);
 
+    rt_err_t  ret = rt_mb_init(&foc_mb,
+                                "mbt",                      /* Name is mbt */
+                                &mb_pool[0],                /* The memory pool used by the mailbox is mb_pool */
+                                sizeof(mb_pool) / 4,        /* The number of messages in the mailbox because a message occupies 4 bytes */
+                                RT_IPC_FLAG_FIFO);          /* Thread waiting in FIFO approach */
+    if (ret != RT_EOK)
+    {
+        rt_kprintf("init mailbox failed.\n");
+        result = -RT_ERROR;
+        goto __exit;
+    }
+
     foc_thread = rt_thread_create("foc_thread", mc_foc_tasks, RT_NULL, sizeof(foc_thread_stack), 1, 5);
     if (foc_thread != RT_NULL)
     {
         rt_thread_startup(foc_thread);
     }
+
 
     /* RT-Thread driver device object initialization */
     /* Register phase A current measurement ADC */
@@ -203,6 +221,8 @@ void mc_foc(void)
     }
 #endif /* SPEED_CONTROL_ENABLE */
 
+    rt_mb_send(&foc_mb, (rt_uint32_t)&input);
+
     return;
 }
 
@@ -247,11 +267,20 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
 
 void mc_foc_tasks(void *parameter)
 {
+    mc_input_signals_t *plant_param = NULL;
     while (1)
     {
-        rt_thread_mdelay(COMM_TX_PERIOD_MS);
-        rt_pin_write(LED1, !rt_pin_read(LED1));
-        mc_communicate();
+        if (rt_mb_recv(&foc_mb, (rt_ubase_t *)plant_param, RT_WAITING_FOREVER) == RT_EOK)
+        {
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+            rt_pin_write(LED1, !rt_pin_read(LED1));
+            rt_uint32_t ia, ib, ic;
+            ia = (rt_uint32_t)(plant_param->ia * 1000);
+            ib = (rt_uint32_t)(plant_param->ib * 1000);
+            ic = (rt_uint32_t)(plant_param->ic * 1000);
+            //rt_kprintf("Current: %d \t %d \t %d \r\n", ia, ib, ic);
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
+        }
     }
 }
 

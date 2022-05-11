@@ -300,8 +300,8 @@ int hw_pulse_encoder_init(void)
             LOG_E("%s register failed", stm32_pulse_encoder_obj[i].name);
             result = -RT_ERROR;
         }
+        HAL_TIM_Encoder_MspInit(&stm32_pulse_encoder_obj[i].tim_handler);
     }
-    HAL_TIM_Encoder_MspInit(&stm32_pulse_encoder_obj[i].tim_handler);
 
     return result;
 }
