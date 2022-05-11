@@ -51,6 +51,7 @@ void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output);
 void mc_inverse_park_transform(mc_tansform_t *transform);
 void mc_impose_limits(float * const input, const float limit_lower, const float limit_upper);
 void mc_wrap_angle(float * const angle);
+void mc_linear_ramp(float * const input, const float step_size, const float final_val);
 
 
 

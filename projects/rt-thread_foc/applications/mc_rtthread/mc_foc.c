@@ -26,6 +26,8 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#define SVM_TEST
+
 void mc_foc(void);
 void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_svpwm_t *svm);
 rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size);
@@ -181,6 +183,15 @@ rt_err_t mc_adc_callback(rt_device_t dev,rt_size_t size)
 
 void mc_foc(void)
 {
+#ifdef SVM_TEST
+    transform.park.q_axis = 1;
+    transform.park.d_axis = 0;
+    mc_linear_ramp(&input.e_angle, 0.1, 100);
+    mc_wrap_angle(&input.e_angle);
+    mc_calc_sin_cos(input.e_angle, &transform.cos_angle, &transform.sin_angle);
+
+
+#else
     /* Read ADC current measurement */
     mc_read_currents(adc1_dev, adc2_dev, &input);
 
@@ -199,7 +210,7 @@ void mc_foc(void)
     d_axis_controller.in_meas = transform.park.d_axis;
     mc_pi_control(&d_axis_controller);
     transform.park.d_axis = d_axis_controller.out;
-
+#endif
     /* Inverse Clarke and Park transform */
     mc_inverse_park_transform(&transform);
 
@@ -207,7 +218,7 @@ void mc_foc(void)
     mc_svpwm_gen(&transform.clarke, &svm);
 
     /*Update PWM duty cycles*/
-    //mc_pwm_set(pwm_dev, &svm);
+    mc_pwm_set(pwm_dev, &svm);
 
 #ifdef SPEED_CONTROL_ENABLE
     p_context->control_sync++;
