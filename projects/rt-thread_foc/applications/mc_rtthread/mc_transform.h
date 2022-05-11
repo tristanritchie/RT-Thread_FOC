@@ -26,22 +26,22 @@
 
 typedef struct mc_park_tansform_t
 {
-    float q_axis;
-    float d_axis;
+    float q_axis;                       /* Q current */
+    float d_axis;                       /* D current */
 } mc_park_tansform_t;
 
 typedef struct mc_clarke_tansform_t
 {
-    float alpha;
-    float beta;
+    float alpha;                        /* Alpha current */
+    float beta;                         /* Beta current */
 } mc_clarke_tansform_t;
 
 typedef struct mc_tansform_t
 {
-    mc_clarke_tansform_t    clarke;
-    mc_park_tansform_t      park;
-    float cos_angle;
-    float sin_angle;
+    mc_clarke_tansform_t    clarke;     /* Alpha/Beta currents */
+    mc_park_tansform_t      park;       /* D/Q currents */
+    float                   cos_angle;  /* Cosine of rotor angle */
+    float                   sin_angle;  /* Sine of rotor angle */
 } mc_tansform_t;
 
 

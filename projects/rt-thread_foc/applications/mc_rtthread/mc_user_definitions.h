@@ -99,16 +99,16 @@
 
 typedef struct mc_input_signals_t
 {
-    float ia;
-    float ib;
-    float ic;
-    float e_angle;
-    float speed;
-    rt_int32_t qe_count;
-    rt_int32_t qe_count_sum;
-    rt_uint32_t a_offset;
-    rt_uint32_t b_offset;
-    rt_uint32_t c_offset;
+    float           ia;             /* Phase A current */
+    float           ib;             /* Phase B current */
+    float           ic;             /* Phase C current */
+    float           e_angle;        /* Rotor electrical angle in rad */
+    float           speed;          /* Rotor speed in rad/s */
+    rt_int32_t      qe_count;
+    rt_int32_t      qe_count_sum;
+    rt_uint32_t     a_offset;       /* Phase A ADC offset */
+    rt_uint32_t     b_offset;       /* Phase B ADC offset */
+    rt_uint32_t     c_offset;       /* Phase C ADC offset */
 } mc_input_signals_t;
 
 
