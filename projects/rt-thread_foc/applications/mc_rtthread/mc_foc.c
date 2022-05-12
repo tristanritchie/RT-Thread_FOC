@@ -192,7 +192,7 @@ void mc_foc(void)
     /*Update PWM duty cycles*/
     //mc_pwm_set(pwm_dev, &svm);
 
-    rt_callback_thread_enter(foc_thread);
+    rt_schedule_fast(foc_thread);
 
     return;
 }
@@ -242,11 +242,10 @@ void mc_foc_tasks(void *parameter)
     rt_schedule();
     while (1)
     {
-        rt_enter_critical();
         HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
         HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
-        rt_exit_critical();
-        rt_callback_thread_leave(foc_thread);
+        rt_thread_suspend(rt_thread_self());
+        rt_schedule();
     }
 }
 
