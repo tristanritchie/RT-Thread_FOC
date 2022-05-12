@@ -1041,11 +1041,9 @@ void rt_schedule_fast(struct rt_thread *to_thread)
 
 void rt_callback_thread_enter(struct rt_thread *to_thread)
 {
-    rt_base_t level;
     struct rt_thread *from_thread;
 
     /* disable interrupt */
-    level = rt_hw_interrupt_disable();
 
 
     /* if the destination thread is not the same as current thread */
@@ -1057,7 +1055,6 @@ void rt_callback_thread_enter(struct rt_thread *to_thread)
             (rt_ubase_t)&to_thread->sp);
 
     /* enable interrupt */
-    rt_hw_interrupt_enable(level);
 
     return;
 }
