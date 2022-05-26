@@ -194,7 +194,7 @@ void mc_clarke_park_transform(mc_input_signals_t *input, mc_tansform_t *output)
     output->park.d_axis =  output->clarke.alpha * output->cos_angle
                         + output->clarke.beta * output->sin_angle;
 
-    output->park.d_axis = -output->clarke.alpha * output->sin_angle
+    output->park.q_axis = -output->clarke.alpha * output->sin_angle
                         + output->clarke.beta * output->cos_angle;
 
     return;

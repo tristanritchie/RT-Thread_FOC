@@ -141,6 +141,8 @@ int mc_foc_init(void)
     /* ADC offset calibration */
     mc_adc_offset_calibration(adc1_dev, ADC1_CH, &input.a_offset);
     mc_adc_offset_calibration(adc2_dev, ADC2_CH, &input.b_offset);
+    input.a_offset = 2046;
+    input.b_offset = 2046;
 
     /* FOC structure initialization */
     /* Initialize PI controller block structure */
@@ -207,7 +209,7 @@ void mc_foc(void)
     mc_svpwm_gen(&transform.clarke, &svm);
 
     /*Update PWM duty cycles*/
-    //mc_pwm_set(pwm_dev, &svm);
+    mc_pwm_set(pwm_dev, &svm);
 
 #ifdef SPEED_CONTROL_ENABLE
     p_context->control_sync++;
@@ -222,7 +224,9 @@ void mc_foc(void)
     }
 #endif /* SPEED_CONTROL_ENABLE */
 
-    rt_mb_send(&foc_mb, (rt_uint32_t)&input);
+    //rt_kprintf("%d, %d \n", (int)(input.ia*1000), (int)(input.ib*1000));
+
+    //rt_mb_send(&foc_mb, (rt_uint32_t)&input);
 
     return;
 }
@@ -259,6 +263,7 @@ void mc_rotor_alignment(mc_input_signals_t *input, mc_tansform_t *transform, mc_
     rt_thread_mdelay(ALIGN_DELAY_MS);
 
     /* Cut power to motor */
+    transform->park.q_axis = 0;
     *svm = SVPWM_INIT;
     mc_pwm_set(pwm_dev, svm);
 
@@ -275,11 +280,8 @@ void mc_foc_tasks(void *parameter)
         {
             HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
             rt_pin_write(LED1, !rt_pin_read(LED1));
-            rt_uint32_t ia, ib, ic;
-            ia = (rt_uint32_t)(plant_param->ia * 1000);
-            ib = (rt_uint32_t)(plant_param->ib * 1000);
-            ic = (rt_uint32_t)(plant_param->ic * 1000);
-            rt_kprintf("%d,\t %d,\t %d \n", ia, ib, ic);
+            int32_t angle = (int32_t)(plant_param->e_angle * 100);
+            rt_kprintf("%d \n", angle);
             HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
         }
     }
@@ -317,9 +319,9 @@ void mc_set_demand(float setpoint)
     rt_kprintf("Speed demand set: %.3f", setpoint);
 #else
 #ifdef TORQUE_CONTROL_ENABLE
-    mc_impose_limits(&setpoint, -1, 1);
-    d_axis_controller.in_ref = setpoint;
-    rt_kprintf("Torque demand set: %.3f", setpoint);
+    mc_impose_limits(&setpoint, -Q_AXIS_CONTROLLER_MAX, Q_AXIS_CONTROLLER_MAX);
+    q_axis_controller.in_ref = setpoint;
+    rt_kprintf("Torque demand set: %d% \n", (int)(setpoint*100));
 #endif /* TORQUE_CONTROL_ENABLE */
 #endif /* SPEED_CONTROL_ENABLE */
 }
