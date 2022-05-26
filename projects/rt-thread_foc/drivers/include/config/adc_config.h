@@ -45,7 +45,7 @@ extern "C" {
 
 #define ADC1_CH_INJ_CONFIG  (ADC_InjectionConfTypeDef)                  \
     {                                                                   \
-      .InjectedChannel = ADC_CHANNEL_1,                                 \
+      .InjectedChannel = ADC_CHANNEL_0,                                 \
       .InjectedRank = 1,                                                \
       .InjectedNbrOfConversion = 1,                                     \
       .InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES,                   \
@@ -86,7 +86,7 @@ extern "C" {
 
 #define ADC2_CH_INJ_CONFIG  (ADC_InjectionConfTypeDef)                  \
     {                                                                   \
-      .InjectedChannel = ADC_CHANNEL_2,                                 \
+      .InjectedChannel = ADC_CHANNEL_3,                                 \
       .InjectedRank = 1,                                                \
       .InjectedNbrOfConversion = 1,                                     \
       .InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES,                   \

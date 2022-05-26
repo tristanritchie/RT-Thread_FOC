@@ -23,7 +23,7 @@
 
 
 
-void mc_adc_offset_calibration(rt_adc_device_t adc_dev, rt_uint32_t channel, rt_uint32_t *offset);
+void mc_adc_offset_calibration(rt_adc_device_t adc_dev, rt_uint32_t channel, rt_int32_t *offset);
 
 void mc_read_currents(rt_adc_device_t adc1_dev, rt_adc_device_t adc2_dev, mc_input_signals_t *input);
 

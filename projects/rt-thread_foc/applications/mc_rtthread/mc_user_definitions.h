@@ -47,6 +47,8 @@
 #define ADC1_DEV_NAME           "adc1"      /* RT-Thread phase A ADC device registration name */
 #define ADC2_DEV_NAME           "adc2"      /* RT-Thread phase B ADC device registration name */
 
+#define ADC1_CH                 1           /* Phase A ADC injected (priority) conversion channel rank */
+#define ADC2_CH                 3           /* Phase A ADC injected (priority) conversion channel rank */
 #define ADC1_CH_RANK            1           /* Phase A ADC injected (priority) conversion channel rank */
 #define ADC2_CH_RANK            1           /* Phase A ADC injected (priority) conversion channel rank */
 
@@ -54,7 +56,7 @@
 #define ADC_REF_VOLTAGE         3.3f         /*  ADC reference voltage */
 
 #define ADC_MAX_CURRENT         1           /* Absolute current measurement range of ADC */
-#define ADC_CURRENT_SCALE       ADC_MAX_CURRENT/(ADC_MAX_COUNT)
+#define ADC_CURRENT_SCALE       (float)ADC_MAX_CURRENT/(ADC_MAX_COUNT)
 
 /* Motor configuration */
 #define MOTOR_NUM_POLE_PAIRS    1           /* Number of pole pairs in the motor */
@@ -104,11 +106,11 @@ typedef struct mc_input_signals_t
     float           ic;             /* Phase C current */
     float           e_angle;        /* Rotor electrical angle in rad */
     float           speed;          /* Rotor speed in rad/s */
+    float           qe_angle_sum;
     rt_int32_t      qe_count;
-    rt_int32_t      qe_count_sum;
-    rt_uint32_t     a_offset;       /* Phase A ADC offset */
-    rt_uint32_t     b_offset;       /* Phase B ADC offset */
-    rt_uint32_t     c_offset;       /* Phase C ADC offset */
+    rt_int32_t      a_offset;       /* Phase A ADC offset */
+    rt_int32_t      b_offset;       /* Phase B ADC offset */
+    rt_int32_t      c_offset;       /* Phase C ADC offset */
 } mc_input_signals_t;
 
 
