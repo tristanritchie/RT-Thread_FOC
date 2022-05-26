@@ -139,8 +139,8 @@ int mc_foc_init(void)
     rt_device_open(pulse_encoder_dev, RT_DEVICE_OFLAG_RDWR);
 
     /* ADC offset calibration */
-    //mc_adc_offset_calibration(adc1_dev, 0, &input.a_offset);
-    //mc_adc_offset_calibration(adc2_dev, 1, &input.b_offset);
+    mc_adc_offset_calibration(adc1_dev, ADC1_CH, &input.a_offset);
+    mc_adc_offset_calibration(adc2_dev, ADC2_CH, &input.b_offset);
 
     /* FOC structure initialization */
     /* Initialize PI controller block structure */
@@ -279,7 +279,7 @@ void mc_foc_tasks(void *parameter)
             ia = (rt_uint32_t)(plant_param->ia * 1000);
             ib = (rt_uint32_t)(plant_param->ib * 1000);
             ic = (rt_uint32_t)(plant_param->ic * 1000);
-            //rt_kprintf("Current: %d \t %d \t %d \r\n", ia, ib, ic);
+            rt_kprintf("%d,\t %d,\t %d \n", ia, ib, ic);
             HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
         }
     }
@@ -293,6 +293,8 @@ void mc_foc_enable(void)
         mc_adc_enable(adc1_dev, adc2_dev);
         mc_pwm_enable(pwm_dev);
     }
+
+    rt_kprintf("FOC enabled\n");
 }
 
 void mc_foc_disable(void)
@@ -303,6 +305,8 @@ void mc_foc_disable(void)
         mc_adc_disable(adc1_dev, adc2_dev);
         mc_pwm_disable(pwm_dev);
     }
+
+    rt_kprintf("FOC disabled\n");
 }
 
 void mc_set_demand(float setpoint)
@@ -414,7 +418,7 @@ static int foc(int argc, char **argv)
     else
     {
         rt_kprintf("Usage: \n");
-        rt_kprintf("foc s <demand>      - set demand speed or torque\n\n");
+        rt_kprintf("foc s <demand>      - set demand speed or torque\n");
         rt_kprintf("foc enable          - enable output\n");
         rt_kprintf("foc disable         - disable output\n");
         rt_kprintf("foc print <param>   - print parameter\n");
