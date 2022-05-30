@@ -41,6 +41,17 @@ void mc_pi_control(mc_pi_controller_t *const param)
 }
 
 
+void mc_axis_decouple(mc_pi_controller_t *q_axis, mc_pi_controller_t *d_axis, float speed)
+{
+    /* Vd' = Vd - (Iq * Lq * We) */
+    d_axis->out -= q_axis->in_meas * MOTOR_D_AXIS_INDUCTANCE * speed;
+    /* Vq' = Vq + (((Id * Ld) + Ke) * We) */
+    q_axis->out += ((d_axis->in_meas * MOTOR_Q_AXIS_INDUCTANCE) + MOTOR_FLUX_LINKAGE) * speed;
+
+    return;
+}
+
+
 void mc_reset_controller(mc_pi_controller_t *const param)
 {
     /**************** PI D Term ***********************************************/

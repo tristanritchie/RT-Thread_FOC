@@ -62,6 +62,10 @@
 #define MOTOR_NUM_POLE_PAIRS    1           /* Number of pole pairs in the motor */
 #define MOTOR_QE_PPR            256         /* Number of quadrature encoder pulses per mechanical revolution */
 
+#define MOTOR_D_AXIS_INDUCTANCE 0.005f
+#define MOTOR_Q_AXIS_INDUCTANCE 0.003f
+#define MOTOR_FLUX_LINKAGE      0.05f
+
 /* Quadrature encoder configuration */
 #define QE_DEV_NAME             "pulse2"
 #define QE_COUNT_PER_EREV       ((MOTOR_QE_PPR * 4) / MOTOR_NUM_POLE_PAIRS)     /* Encoder edges per electrical revolution */

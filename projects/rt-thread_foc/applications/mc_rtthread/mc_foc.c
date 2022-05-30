@@ -193,11 +193,14 @@ void mc_foc(void)
 
     /* D/Q current PI control */
     q_axis_controller.in_meas = transform.park.q_axis;
-    mc_pi_control(&q_axis_controller);
-    transform.park.q_axis = q_axis_controller.out;
-
     d_axis_controller.in_meas = transform.park.d_axis;
+
+    mc_pi_control(&q_axis_controller);
     mc_pi_control(&d_axis_controller);
+
+    mc_axis_decouple(&q_axis_controller, &d_axis_controller, input.speed);
+
+    transform.park.q_axis = q_axis_controller.out;
     transform.park.d_axis = d_axis_controller.out;
 
     /* Inverse Clarke and Park transform */

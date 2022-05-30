@@ -7,6 +7,7 @@
  * Date           Author       Notes
  * 2022-03-21     Tristan       the first version
  */
+#include "mc_user_definitions.h"
 
 typedef struct mc_pi_controller_t
 {
@@ -52,4 +53,5 @@ typedef struct mc_pi_controller_t
 
 
 void mc_pi_control(mc_pi_controller_t *const param);
+void mc_axis_decouple(mc_pi_controller_t *q_axis, mc_pi_controller_t *d_axis, float speed);
 void mc_reset_controller(mc_pi_controller_t *const param);
