@@ -149,6 +149,9 @@ int mc_foc_init(void)
     /* Enable peripherals*/
     mc_adc_enable(adc1_dev, adc2_dev);
     mc_pwm_enable(pwm_dev);
+    rt_pwm_set(pwm_dev, PWM_CH1, PWM_PERIOD, svm.pwm1);
+    rt_pwm_set(pwm_dev, PWM_CH2, PWM_PERIOD, svm.pwm2);
+    rt_pwm_set(pwm_dev, PWM_CH3, PWM_PERIOD, svm.pwm3);
 
     /* Forced alignment of rotor */
     mc_rotor_alignment(&input, &transform, &svm);
@@ -468,10 +471,31 @@ void mc_pwm_disable(struct rt_device_pwm *pwm_dev)
 }
 
 
-void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
+void mc_pwm_set_old(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
 {
     rt_pwm_set(pwm_dev, PWM_CH1, PWM_PERIOD, svm->pwm1);
     rt_pwm_set(pwm_dev, PWM_CH2, PWM_PERIOD, svm->pwm2);
     rt_pwm_set(pwm_dev, PWM_CH3, PWM_PERIOD, svm->pwm3);
 }
+
+
+void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
+{
+    rt_uint32_t pwm1_dc, pwm2_dc, pwm3_dc;
+    rt_uint64_t tim_clock;
+    TIM_TypeDef *tim_reg = pwm_dev->parent.user_data;
+
+    tim_clock = HAL_RCC_GetPCLK1Freq() * 2;
+    tim_clock /= 1000000UL;
+    pwm1_dc = (unsigned long long)svm->pwm1 * tim_clock / 1000ULL;
+    pwm2_dc = (unsigned long long)svm->pwm2 * tim_clock / 1000ULL;
+    pwm3_dc = (unsigned long long)svm->pwm3 * tim_clock / 1000ULL;
+
+    tim_reg->CCR1 = pwm1_dc;
+    tim_reg->CCR2 = pwm2_dc;
+    tim_reg->CCR3 = pwm3_dc;
+
+    return;
+}
+
 
