@@ -139,8 +139,10 @@ int mc_foc_init(void)
     rt_device_open(pulse_encoder_dev, RT_DEVICE_OFLAG_RDWR);
 
     /* ADC offset calibration */
-    mc_adc_offset_calibration(adc1_dev, ADC1_CH, &input.a_offset);
-    mc_adc_offset_calibration(adc2_dev, ADC2_CH, &input.b_offset);
+    //mc_adc_offset_calibration(adc1_dev, ADC1_CH, &input.a_offset);
+    //mc_adc_offset_calibration(adc2_dev, ADC2_CH, &input.b_offset);
+    input.a_offset = ADC_MAX_COUNT / 2;
+    input.b_offset = ADC_MAX_COUNT / 2;
 
     /* FOC structure initialization */
     /* Initialize PI controller block structure */
@@ -197,10 +199,11 @@ void mc_foc(void)
     /* D/Q current PI control */
     q_axis_controller.in_meas = transform.park.q_axis;
     mc_pi_control(&q_axis_controller);
-    transform.park.q_axis = q_axis_controller.out;
 
     d_axis_controller.in_meas = transform.park.d_axis;
     mc_pi_control(&d_axis_controller);
+
+    transform.park.q_axis = q_axis_controller.out;
     transform.park.d_axis = d_axis_controller.out;
 
     /* Inverse Clarke and Park transform */
@@ -210,7 +213,7 @@ void mc_foc(void)
     mc_svpwm_gen(&transform.clarke, &svm);
 
     /*Update PWM duty cycles*/
-    //mc_pwm_set(pwm_dev, &svm);
+    mc_pwm_set(pwm_dev, &svm);
 
 #ifdef SPEED_CONTROL_ENABLE
     p_context->control_sync++;
@@ -225,7 +228,7 @@ void mc_foc(void)
     }
 #endif /* SPEED_CONTROL_ENABLE */
 
-    rt_mb_send(&foc_mb, (rt_uint32_t)&input);
+    //rt_mb_send(&foc_mb, (rt_uint32_t)&input);
 
     return;
 }
@@ -276,14 +279,12 @@ void mc_foc_tasks(void *parameter)
     {
         if (rt_mb_recv(&foc_mb, (rt_ubase_t *)plant_param, RT_WAITING_FOREVER) == RT_EOK)
         {
-            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
             rt_pin_write(LED1, !rt_pin_read(LED1));
             rt_uint32_t ia, ib, ic;
             ia = (rt_uint32_t)(plant_param->ia * 1000);
             ib = (rt_uint32_t)(plant_param->ib * 1000);
             ic = (rt_uint32_t)(plant_param->ic * 1000);
             rt_kprintf("%d,\t %d,\t %d \n", ia, ib, ic);
-            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);
         }
     }
 }
@@ -322,7 +323,7 @@ void mc_set_demand(float setpoint)
 #ifdef TORQUE_CONTROL_ENABLE
     mc_impose_limits(&setpoint, -1, 1);
     d_axis_controller.in_ref = setpoint;
-    rt_kprintf("Torque demand set: %.3f", setpoint);
+    rt_kprintf("Torque demand set: %d%\n", (int)(setpoint*100));
 #endif /* TORQUE_CONTROL_ENABLE */
 #endif /* SPEED_CONTROL_ENABLE */
 }
@@ -483,7 +484,7 @@ void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
 {
     rt_uint32_t pwm1_dc, pwm2_dc, pwm3_dc;
     rt_uint64_t tim_clock;
-    TIM_TypeDef *tim_reg = pwm_dev->parent.user_data;
+    TIM_HandleTypeDef *tim_reg = pwm_dev->parent.user_data;
 
     tim_clock = HAL_RCC_GetPCLK1Freq() * 2;
     tim_clock /= 1000000UL;
@@ -491,9 +492,9 @@ void mc_pwm_set(struct rt_device_pwm *pwm_dev, mc_svpwm_t *svm)
     pwm2_dc = (unsigned long long)svm->pwm2 * tim_clock / 1000ULL;
     pwm3_dc = (unsigned long long)svm->pwm3 * tim_clock / 1000ULL;
 
-    tim_reg->CCR1 = pwm1_dc;
-    tim_reg->CCR2 = pwm2_dc;
-    tim_reg->CCR3 = pwm3_dc;
+    tim_reg->Instance->CCR1 = pwm1_dc;
+    tim_reg->Instance->CCR2 = pwm2_dc;
+    tim_reg->Instance->CCR3 = pwm3_dc;
 
     return;
 }

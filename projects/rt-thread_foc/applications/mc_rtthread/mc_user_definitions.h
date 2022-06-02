@@ -70,8 +70,8 @@
 
 
 /* Rotor alignment configuration */
-#define ALIGN_CURRENT           0.4f         /* Rotor alignment current vector magnitude */
-#define ALIGN_DELAY_MS          200         /* Delay (ms) for the rotor to align with stationary current vector */
+#define ALIGN_CURRENT           0.5f         /* Rotor alignment current vector magnitude */
+#define ALIGN_DELAY_MS          5000         /* Delay (ms) for the rotor to align with stationary current vector */
 
 /* Communication parameters */
 #define COM_SPEED_MASK          (1 << 0)
@@ -84,14 +84,14 @@
 
 
 /* Control system parameters*/
-#define D_AXIS_CONTROLLER_KP    0.02f       /* D-term (proportional gain) */
+#define D_AXIS_CONTROLLER_KP    0.2f       /* D-term (proportional gain) */
 #define D_AXIS_CONTROLLER_KI    0.0002f     /* I-term (integral gain) */
-#define D_AXIS_CONTROLLER_KC    0.5f        /* C-term (anti-windup gain) */
+#define D_AXIS_CONTROLLER_KC    0*0.5f        /* C-term (anti-windup gain) */
 #define D_AXIS_CONTROLLER_MAX   0.98f       /* Max output */
 
-#define Q_AXIS_CONTROLLER_KP    0.02f
+#define Q_AXIS_CONTROLLER_KP    0.2f
 #define Q_AXIS_CONTROLLER_KI    0.0002f
-#define Q_AXIS_CONTROLLER_KC    0.5f
+#define Q_AXIS_CONTROLLER_KC    0*0.5f
 #define Q_AXIS_CONTROLLER_MAX   0.98f
 
 #define SPEED_CONTROLLER_KP    0.002f
